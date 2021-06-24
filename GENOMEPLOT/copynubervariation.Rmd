@@ -1,0 +1,185 @@
+---
+title: "Copynumberprofiles"
+output: pdf_document
+---
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+dat <- df
+```
+
+
+```{r}
+#chr <- read.csv('df_chr.csv', header = T, row.names = 1, check.names = F)
+chr[chr[,1]=='*',] <- 'NA'
+chr[chr[,1]=='chr1',] <- 1
+chr[chr[,1]=='chr2',] <- 2
+chr[chr[,1]=='chr3',] <- 3
+chr[chr[,1]=='chr4',] <- 4
+chr[chr[,1]=='chr5',] <- 5
+chr[chr[,1]=='chr6',] <- 6
+chr[chr[,1]=='chr7',] <- 7
+chr[chr[,1]=='chr8',] <- 8
+chr[chr[,1]=='chr9',] <- 9
+chr[chr[,1]=='chr10',] <- 10
+chr[chr[,1]=='chr11',] <- 11
+chr[chr[,1]=='chr12',] <- 12
+chr[chr[,1]=='chr13',] <- 13
+chr[chr[,1]=='chr14',] <- 14
+chr[chr[,1]=='chr15',] <- 15
+chr[chr[,1]=='chr16',] <- 16
+chr[chr[,1]=='chr17',] <- 17
+chr[chr[,1]=='chr18',] <- 18
+chr[chr[,1]=='chr19',] <- 19
+chr[chr[,1]=='chr20',] <- 20
+chr[chr[,1]=='chr21',] <- 21
+chr[chr[,1]=='chr22',] <- 22
+chr[chr[,1]=='X',] <- 23
+chr[ctablehr[,1]=='Y',] <- 24
+colnames(chr) <- 'chr'
+```
+
+
+```{r}
+#pos <- read.csv('pos.csv', header = T, row.names = 1, check.names = F)
+colnames(pos) <- 'pos'
+rownames(pos) <- rownames(chr)
+```
+
+```{r}
+df <- cbind(chr,pos,df)
+```
+
+```{r}
+head(df,5)
+
+```
+
+```{r}
+max_pos <- c(248956422,242193529,198295559,190214555,181538259,170805979,159345973,
+            145138636,138394717,133797422,135086622,133275309,114364328,107043718,
+            101991189,90338345,83257441,80373285,58617616,64444167,46709983,50818468,
+            156040895,57227415)
+
+
+pos_chr <- cumsum(max_pos)
+pos_chr
+```
+
+```{r}
+df <- df[df$chr != 'NA',]
+table(df$chr)
+df$chr <- as.numeric(as.character(df$chr))
+df_order <- df[order(df$chr, df$pos),]
+head(df_order,5)
+df$pos <- as.character(df$pos)
+```
+
+```{r}
+df_order <- na.omit(df_order)
+head(df_order,5)
+dim(df_order)
+```
+
+```{r}
+new_pos <- c()
+for (i in 1:24){
+  if (i == 1){
+    a <- as.numeric(df_order[df_order$chr == i,]$pos)
+    new_pos <- c(new_pos,a)}
+  else{
+    a <- as.numeric(df_order[df_order$chr == i,]$pos) + pos_chr[i-1]
+    new_pos <- c(new_pos,a)}
+}
+length(new_pos)
+```
+
+```{r}
+table(df_order$chr)
+```
+
+```{r}
+head(new_pos)
+dim(df_order);length(new_pos)
+df_order <- cbind(new_pos,df_order)
+```
+
+```{r}
+head(df_order)
+```
+
+```{r}
+tail(df_order)
+```
+
+# Separate in bins
+
+```{r}
+#len_bin <- max(df_order$new_pos)/30000
+start <- c(0)
+a <- 0
+for(i in 1:95847){
+  a<- a + 30000
+  start <- c(start,a)
+}
+end <- c(30000)
+a <- 30000
+for(i in 1:95847){
+  a<- a + 30000
+  end <- c(end,a)
+}
+```
+
+```{r}
+bins <- c()
+for(i in df_order$new_pos){
+  for (j in 1:length(end)){
+    if (i<end[j] & i>start[j]){
+      bins <- c(bins,j)
+    }
+  }
+}
+```
+
+```{r}
+poss <- cumsum(c(248956422,242193529,198295559,190214555,181538259,170805979,159345973,
+            145138636,138394717,133797422,135086622,133275309,114364328,107043718,
+            101991189,90338345,83257441,80373285,58617616,64444167,46709983,50818468))
+npos <- poss/2
+```
+
+#genome plot
+
+```{r}
+df_order$chr <- factor(df_order$chr, levels =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22))
+ggplot(df_order[,c('new_pos','A49O','chr')], aes(x=new_pos, y= `A49O`)) + 
+  geom_point(size=0.2)+ 
+  xlab('Chromosomes') + 
+  ylab('Intensities') + 
+  theme_classic() + 
+  geom_vline(xintercept = poss,linetype="dotted")
+  geom_text(data = NULL, x = npos[1], y = 60000, label = 'CHR1')
+  ggtitle("Sample A49O")
+```
+
+```{r}
+df_order$chr <- factor(df_order$chr, levels =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24))
+ggplot(df_order[,c('pos','A49O','chr')], aes(x=pos, y= `A49O`, color='black')) + 
+  geom_point(size=0.5)+ 
+  xlab('Chromosomes') + 
+  ylab('Intensities') + 
+  theme_classic() + 
+  geom_vline(xintercept = c(2849, 4526,6040,7053,8193),linetype="dotted")
+  ggtitle("Sample 1351")
+```
+
+
+
+
+
+
+
+
